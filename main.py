@@ -8,8 +8,8 @@ import argparse
 load_dotenv()
 # Define your InfluxDB 2.0 connection details
 url = "http://localhost:8086"
-token = os.getenv("INFLUXDB_TOKEN")
-org = "org"
+influxDbToken = os.getenv("INFLUXDB_TOKEN")
+org = "docs"
 bucket = "home"
 # Parse command line arguments
 parser = argparse.ArgumentParser(description='HEP mjerni podaci')
@@ -17,7 +17,6 @@ parser.add_argument('--username', required=True, help='username')
 parser.add_argument('--password', required=True, help='password')
 args = parser.parse_args()
 date_format = "%Y-%m-%dT%H:%M:%S"
-
 username = args.username
 password = args.password
 # Perform a POST request to the login endpoint
@@ -54,7 +53,7 @@ for place in measurementPlaces:
         data = response.json()
         print(data)
         # Write data to InfluxDB
-        client = InfluxDBClient(url=url, token=token, org=org)
+        client = InfluxDBClient(url=url, token=influxDbToken, org=org)
         write_api = client.write_api(write_options=SYNCHRONOUS)
         for record in data:
             point = Point("preuzeta_struja").tag("mjerno_mjesto", place["Sifra"]).field(
