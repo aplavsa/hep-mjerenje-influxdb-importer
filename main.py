@@ -9,8 +9,8 @@ load_dotenv()
 # Define your InfluxDB 2.0 connection details
 url = "http://localhost:8086"
 influxDbToken = os.getenv("INFLUXDB_TOKEN")
-org = "docs"
-bucket = "home"
+org = os.getenv("INFLUXDB_ORG")
+bucket = os.getenv("INFLUXDB_BUCKET")
 # Parse command line arguments
 parser = argparse.ArgumentParser(description='HEP mjerni podaci')
 parser.add_argument('--username', required=True, help='username')
