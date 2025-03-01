@@ -52,9 +52,8 @@ for buyer in buyerList:
         measurementPlaces.append(place)
 print(f"measurementPlaces: {measurementPlaces}")
 for place in measurementPlaces:
-    last_month = datetime.strptime(place["MjesecDo"], date_format)
     month = datetime.strptime(
-        args.month, date_input_format) if args.month else last_month
+        args.month, date_input_format) if args.month else datetime.strptime(place["MjesecDo"], date_format)
     data_url = f"https://mjerenje.hep.hr/mjerenja/v1/api/data/omm/{place["Sifra"]}/krivulja/mjesec/{month.strftime("%m.%Y")}/smjer/{args.direction}"
     response = requests.post(
         data_url, headers={"Authorization": f"Bearer {token}"})
