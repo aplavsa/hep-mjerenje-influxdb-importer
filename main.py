@@ -18,7 +18,11 @@ parser.add_argument('--username', required=True, help='username')
 parser.add_argument('--password', required=True, help='password')
 parser.add_argument('--direction', required=False, default='P',
                     help='smjer struje (P ili R) - default P - P oznacava potrosnju, R proizvodnju')
+parser.add_argument('--month', required=False,
+                    help='mjesec za koji se preuzimaju podaci, format: MM.YYYY gdje je MM mjesec, a YYYY godina')
 args = parser.parse_args()
+# Define date format
+date_input_format = "%m.%Y"
 date_format = "%Y-%m-%dT%H:%M:%S"
 username = args.username
 password = args.password
@@ -49,8 +53,9 @@ for buyer in buyerList:
 print(f"measurementPlaces: {measurementPlaces}")
 for place in measurementPlaces:
     last_month = datetime.strptime(place["MjesecDo"], date_format)
-
-    data_url = f"https://mjerenje.hep.hr/mjerenja/v1/api/data/omm/{place["Sifra"]}/krivulja/mjesec/{last_month.strftime("%m.%Y")}/smjer/{args.direction}"
+    month = datetime.strptime(
+        args.month, date_input_format) if args.month else last_month
+    data_url = f"https://mjerenje.hep.hr/mjerenja/v1/api/data/omm/{place["Sifra"]}/krivulja/mjesec/{month.strftime("%m.%Y")}/smjer/{args.direction}"
     response = requests.post(
         data_url, headers={"Authorization": f"Bearer {token}"})
     if response.status_code == 200:
