@@ -1,4 +1,5 @@
-from datetime import datetime
+from datetime import datetime, timezone
+from zoneinfo import ZoneInfo
 from influxdb_client import InfluxDBClient, Point, WritePrecision
 from influxdb_client.client.write_api import SYNCHRONOUS
 import requests
@@ -15,6 +16,8 @@ bucket = os.getenv("INFLUXDB_BUCKET")
 parser = argparse.ArgumentParser(description='HEP mjerni podaci')
 parser.add_argument('--username', required=True, help='username')
 parser.add_argument('--password', required=True, help='password')
+parser.add_argument('--direction', required=False, default='P',
+                    help='smjer struje (P ili R) - default P - P oznacava potrosnju, R proizvodnju')
 args = parser.parse_args()
 date_format = "%Y-%m-%dT%H:%M:%S"
 username = args.username
@@ -45,7 +48,9 @@ for buyer in buyerList:
         measurementPlaces.append(place)
 print(f"measurementPlaces: {measurementPlaces}")
 for place in measurementPlaces:
-    data_url = f"https://mjerenje.hep.hr/mjerenja/v1/api/data/omm/{place["Sifra"]}/krivulja/mjesec/02.2025/smjer/P"
+    last_month = datetime.strptime(place["MjesecDo"], date_format)
+
+    data_url = f"https://mjerenje.hep.hr/mjerenja/v1/api/data/omm/{place["Sifra"]}/krivulja/mjesec/{last_month.strftime("%m.%Y")}/smjer/{args.direction}"
     response = requests.post(
         data_url, headers={"Authorization": f"Bearer {token}"})
     if response.status_code == 200:
@@ -56,8 +61,8 @@ for place in measurementPlaces:
         client = InfluxDBClient(url=url, token=influxDbToken, org=org)
         write_api = client.write_api(write_options=SYNCHRONOUS)
         for record in data:
-            point = Point("preuzeta_struja").tag("mjerno_mjesto", place["Sifra"]).field(
-                "snaga", float(record["Value"].replace(",", "."))).time(datetime.strptime(record["Datum"], date_format), WritePrecision.NS)
+            point = Point("preuzeta_struja" if args.direction == "P" else "predana_struja").tag("mjerno_mjesto", place["Sifra"]).field(
+                "snaga", float(record["Value"].replace(",", "."))).time(datetime.strptime(record["Datum"], date_format).astimezone(tz=ZoneInfo("Europe/Berlin")), WritePrecision.NS)
             write_api.write(bucket=bucket, org=org, record=point)
     else:
         print(f"Failed to retrieve data for place {place['Sifra']}")
