@@ -20,12 +20,15 @@ parser.add_argument('--direction', required=False, default='P',
                     help='smjer struje (P ili R) - default P - P oznacava potrosnju, R proizvodnju')
 parser.add_argument('--month', required=False,
                     help='mjesec za koji se preuzimaju podaci, format: MM.YYYY gdje je MM mjesec, a YYYY godina')
+
 args = parser.parse_args()
+
 # Define date format
 date_input_format = "%m.%Y"
 date_format = "%Y-%m-%dT%H:%M:%S"
 username = args.username
 password = args.password
+
 # Perform a POST request to the login endpoint
 login_url = "https://mjerenje.hep.hr/mjerenja/v1/api/user/login"
 login_data = {
@@ -33,10 +36,15 @@ login_data = {
     "Password": password
 }
 response = requests.post(login_url, json=login_data)
+
 buyerList = response.json()["KupacList"]
+
 print(f"KupacList: {buyerList}")
+
 token = response.json()["Token"]
+
 print(f"Token: {token}")
+
 # Check if the login was successful
 if response.status_code == 200:
     print("Login successful")
@@ -46,11 +54,12 @@ else:
     print("Login failed")
     print(response.text)
     exit(1)
+
 measurementPlaces = []
 for buyer in buyerList:
     for place in buyer["OmmList"]:
         measurementPlaces.append(place)
-print(f"measurementPlaces: {measurementPlaces}")
+# print(f"measurementPlaces: {measurementPlaces}")
 for place in measurementPlaces:
     month = datetime.strptime(
         args.month, date_input_format) if args.month else datetime.strptime(place["MjesecDo"], date_format)
@@ -73,23 +82,3 @@ for place in measurementPlaces:
         print(response.text)
         print(response.status_code)
         exit(1)
-# # Create an InfluxDB client
-# client = InfluxDBClient(url=url, token=token, org=org)
-
-# # Write data to InfluxDB
-# write_api = client.write_api(write_options=SYNCHRONOUS)
-# point = Point("measurement_name").tag("tag_key", "tag_value").field(
-#     "field_key", 1.0).time(datetime.utcnow(), WritePrecision.NS)
-# write_api.write(bucket=bucket, org=org, record=point)
-
-# # Query data from InfluxDB
-# query_api = client.query_api()
-# query = f'from(bucket: "{bucket}") |> range(start: -1h)'
-# tables = query_api.query(query, org=org)
-
-# for table in tables:
-#     for record in table.records:
-#         print(record)
-
-# # Close the client
-# client.close()
